@@ -1,8 +1,9 @@
 //SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.30;
-
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol"; 
 
 /**
  * @title RebaseToken
@@ -12,7 +13,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @notice Each will user will have their own interest rate that is the global interest rate at the time of depositing.
  */
 
-contract RebaseToken is ERC20 {
+contract RebaseToken is ERC20,Ownable, AccessControl {
     /////////////////////
     // State Variables
     /////////////////////
@@ -21,7 +22,7 @@ contract RebaseToken is ERC20 {
     /////////////////////
     // State Variables
     /////////////////////
-
+    bytes32 private constant MINTER_BURN_ROLE = keccak256("MINTER_BURN_ROLE"); // роль минтера
     uint256 private s_interestRate = 5e10; // 5% interest rate expressed in 1e18 precision (5e16 = 5%) 5e10 = 0.000005% per second
     mapping(address => uint256) public s_userInterestRate; // хранит процентную ставку пользователя
     mapping(address => uint256) public s_userLastUpdatedTimestamp; // хранит последний таймстамп обновления пользователя
@@ -36,11 +37,22 @@ contract RebaseToken is ERC20 {
     // Constructor
     /////////////////////
 
-    constructor() ERC20("Rebase Token", "RBT") {} //инициализируем ERC20 токен с именем и символом
+    constructor() ERC20("Rebase Token", "RBT") Ownable(msg.sender) {} //инициализируем ERC20 токен с именем и символом
 
     /////////////////////
     // Functions
     /////////////////////
+
+
+
+    /**
+    * @dev Grants the MINTER_BURN_ROLE to a specified address.
+    * Can only be called by the contract owner.
+    * @param _minterBurner The address to be granted the MINTER_BURN_ROLE.
+     */
+    function grandMinterBurnRole(address _minterBurner) public onlyOwner() {
+        _grantRole(MINTER_BURN_ROLE, _minterBurner);
+    }
 
     // Тут мы переопределяем баланс пользователя с учетом накопленных процентов
     function balanceOf(address _user) public view override returns (uint256) {
@@ -72,7 +84,7 @@ contract RebaseToken is ERC20 {
      * Emits an {InterestRateUpdated} event upon successful update.
      * @param _newRate The new interest rate to set.
      */
-    function setInterestRate(uint256 _newRate) public {
+    function setInterestRate(uint256 _newRate) public onlyOwner() {
         if (_newRate < s_interestRate) {
             // проверяем что новая ставка меньше текущей
             revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate, _newRate); // выбрасываем ошибку если новая ставка больше текущей
@@ -88,7 +100,7 @@ contract RebaseToken is ERC20 {
      * @param _to The address to which the tokens will be minted.
      * @param _amount The amount of tokens to mint.
      */
-    function mint(address _to, uint256 _amount) public {
+    function mint(address _to, uint256 _amount) public onlyRole(MINTER_BURN_ROLE){
         _mintAccuredInterest(_to); //начисляем проценты перед минтом
         s_userInterestRate[_to] = s_interestRate; //обновляем процентную ставку пользователя
         _mint(_to, _amount); //минтим токены
@@ -101,7 +113,7 @@ contract RebaseToken is ERC20 {
      * @param _from The address from which to burn tokens.
      * @param _amount The amount of tokens to burn.
      */
-    function burn(address _from, uint256 _amount) public {
+    function burn(address _from, uint256 _amount) public onlyRole(MINTER_BURN_ROLE) {
         if (_amount == type(uint256).max) {
             // если передано максимальное значение, сжигаем весь баланс
             _amount = balanceOf(_from); // получаем текущий баланс с учетом процентов

@@ -37,17 +37,24 @@ contract Vault {
         i_rebaseToken.mint(msg.sender, msg.value);
         emit Deposit(msg.sender, msg.value);
     }
+
+    
     function redeem(uint256 _amount ) external {
+
+         if (_amount == type(uint256).max) {
+            // если передано максимальное значение, сжигаем весь баланс
+            _amount = i_rebaseToken.balanceOf(msg.sender);
+        }
+
         i_rebaseToken.burn(msg.sender,_amount);
+
         (bool succes, )=payable(msg.sender).call{value:_amount}("");
+        
         if(!succes){
             revert Vault__ReddemFailed();
         }
         emit Redeem(msg.sender, _amount);
     }
-
-
-
 
     /**
     * @dev Returns the address of the RebaseToken contract.

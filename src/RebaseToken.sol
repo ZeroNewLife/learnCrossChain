@@ -23,7 +23,7 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
     // State Variables
     /////////////////////
     bytes32 private constant MINTER_BURN_ROLE = keccak256("MINTER_BURN_ROLE"); // роль минтера
-    uint256 private s_interestRate = 5e10; // 5% interest rate expressed in 1e18 precision (5e16 = 5%) 5e10 = 0.000005% per second
+    uint256 private s_interestRate =5e10;  //(5*PRESISION_FACTOR)/1e8; 
     mapping(address => uint256) public s_userInterestRate; // хранит процентную ставку пользователя
     mapping(address => uint256) public s_userLastUpdatedTimestamp; // хранит последний таймстамп обновления пользователя
     uint256 private constant PRESISION_FACTOR = 1e18; // precision factor for interest calculations
@@ -114,10 +114,10 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
      * @param _amount The amount of tokens to burn.
      */
     function burn(address _from, uint256 _amount) public onlyRole(MINTER_BURN_ROLE) {
-        if (_amount == type(uint256).max) {
-            // если передано максимальное значение, сжигаем весь баланс
-            _amount = balanceOf(_from); // получаем текущий баланс с учетом процентов
-        }
+        // if (_amount == type(uint256).max) {
+        //     // если передано максимальное значение, сжигаем весь баланс
+        //     _amount = balanceOf(_from); // получаем текущий баланс с учетом процентов
+        // }
         _mintAccuredInterest(_from); // начисляем проценты перед сжиганием
         _burn(_from, _amount); // сжигаем токены
     }

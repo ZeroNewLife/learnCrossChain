@@ -3,9 +3,9 @@
 pragma solidity ^0.8.30;
 
 import {Test,console} from "forge-std/Test.sol";
-import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
-import {RebaseToken} from "../src/RebaseToken.sol";
-import {Vault} from "../src/Vault.sol";
+import {IRebaseToken} from "../../src/interfaces/IRebaseToken.sol";
+import {RebaseToken} from "../../src/RebaseToken.sol";
+import {Vault} from "../../src/Vault.sol";
 
 contract RebaseTokenTest is Test {
     RebaseToken private rebaseToken;

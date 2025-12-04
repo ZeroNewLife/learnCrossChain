@@ -10,7 +10,7 @@ contract RebaseTokenTest is Test {
     Vault vault;
 
     address alice = address(0xA1);
-    address bob   = address(0xB2);
+    address bob = address(0xB2);
 
     uint256 constant INITIAL_RATE = 5e10;
 
@@ -75,10 +75,7 @@ contract RebaseTokenTest is Test {
         token.transfer(bob, 0.5 ether);
 
         // Bob gets sender rate because he had zero balance
-        assertEq(
-            token.getUserInterestRate(bob),
-            token.getUserInterestRate(alice)
-        );
+        assertEq(token.getUserInterestRate(bob), token.getUserInterestRate(alice));
 
         // Bob gets EXACTLY the transferred amount (no interest)
         assertEq(token.balanceOf(bob), 0.5 ether);
@@ -90,21 +87,21 @@ contract RebaseTokenTest is Test {
     // -----------------------------
     // TRANSFER MAX UINT
     // -----------------------------
-   function testTransferMaxUintTransfersAllPrincipal() public {
-    vm.prank(alice);
-    vault.deposit{value: 1 ether}();
+    function testTransferMaxUintTransfersAllPrincipal() public {
+        vm.prank(alice);
+        vault.deposit{value: 1 ether}();
 
-    vm.warp(block.timestamp + 10);
+        vm.warp(block.timestamp + 10);
 
-    // FIRST: simulate internal interest mint
-    uint256 newPrincipal = token.balanceOf(alice);
+        // FIRST: simulate internal interest mint
+        uint256 newPrincipal = token.balanceOf(alice);
 
-    vm.prank(alice);
-    token.transfer(bob, type(uint256).max);
+        vm.prank(alice);
+        token.transfer(bob, type(uint256).max);
 
-    assertEq(token.principalBalanceOf(alice), 0);
-    assertEq(token.principalBalanceOf(bob), newPrincipal);
-}
+        assertEq(token.principalBalanceOf(alice), 0);
+        assertEq(token.principalBalanceOf(bob), newPrincipal);
+    }
 
     // -----------------------------
     // MINT & ROLE CHECK

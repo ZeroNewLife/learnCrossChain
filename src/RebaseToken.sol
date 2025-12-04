@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.30;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol"; 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title RebaseToken
@@ -13,7 +13,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * @notice Each will user will have their own interest rate that is the global interest rate at the time of depositing.
  */
 
-contract RebaseToken is ERC20,Ownable, AccessControl {
+contract RebaseToken is ERC20, Ownable, AccessControl {
     /////////////////////
     // State Variables
     /////////////////////
@@ -23,7 +23,7 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
     // State Variables
     /////////////////////
     bytes32 private constant MINTER_BURN_ROLE = keccak256("MINTER_BURN_ROLE"); // роль минтера
-    uint256 private s_interestRate =5e10;  //(5*PRESISION_FACTOR)/1e8; 
+    uint256 private s_interestRate = 5e10; //(5*PRESISION_FACTOR)/1e8;
     mapping(address => uint256) public s_userInterestRate; // хранит процентную ставку пользователя
     mapping(address => uint256) public s_userLastUpdatedTimestamp; // хранит последний таймстамп обновления пользователя
     uint256 private constant PRESISION_FACTOR = 1e18; // precision factor for interest calculations
@@ -43,14 +43,12 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
     // Functions
     /////////////////////
 
-
-
     /**
-    * @dev Grants the MINTER_BURN_ROLE to a specified address.
-    * Can only be called by the contract owner.
-    * @param _minterBurner The address to be granted the MINTER_BURN_ROLE.
+     * @dev Grants the MINTER_BURN_ROLE to a specified address.
+     * Can only be called by the contract owner.
+     * @param _minterBurner The address to be granted the MINTER_BURN_ROLE.
      */
-    function grandMinterBurnRole(address _minterBurner) public onlyOwner() {
+    function grandMinterBurnRole(address _minterBurner) public onlyOwner {
         _grantRole(MINTER_BURN_ROLE, _minterBurner);
     }
 
@@ -71,20 +69,21 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
     }
 
     /**
-        * @dev Returns the principal balance of a user without accrued interest.
-        * @param _user The address of the user.
-        * @return The principal balance of the user.
+     * @dev Returns the principal balance of a user without accrued interest.
+     * @param _user The address of the user.
+     * @return The principal balance of the user.
      */
     function principalBalanceOf(address _user) public view returns (uint256) {
         return super.balanceOf(_user);
     }
+
     /**
      * @dev Sets a new global interest rate.
      * The new interest rate must be less than the current interest rate.
      * Emits an {InterestRateUpdated} event upon successful update.
      * @param _newRate The new interest rate to set.
      */
-    function setInterestRate(uint256 _newRate) public onlyOwner() {
+    function setInterestRate(uint256 _newRate) public onlyOwner {
         if (_newRate < s_interestRate) {
             // проверяем что новая ставка меньше текущей
             revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate, _newRate); // выбрасываем ошибку если новая ставка больше текущей
@@ -100,7 +99,7 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
      * @param _to The address to which the tokens will be minted.
      * @param _amount The amount of tokens to mint.
      */
-    function mint(address _to, uint256 _amount) public onlyRole(MINTER_BURN_ROLE){
+    function mint(address _to, uint256 _amount) public onlyRole(MINTER_BURN_ROLE) {
         _mintAccuredInterest(_to); //начисляем проценты перед минтом
         s_userInterestRate[_to] = s_interestRate; //обновляем процентную ставку пользователя
         _mint(_to, _amount); //минтим токены
@@ -145,7 +144,7 @@ contract RebaseToken is ERC20,Ownable, AccessControl {
         return super.transfer(_recipient, _amount); //вызываем стандартный трансфер
     }
 
-    /** 
+    /**
      * @dev Overridden transferFrom function to include interest accrual for both sender and recipient.
      * This function mints accrued interest for both the sender and recipient before executing the transfer.
      * If the transfer amount is set to the maximum uint256 value, it transfers the entire balance of the sender.
